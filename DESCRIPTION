@@ -1,0 +1,11 @@
+Package: januts
+Type: Package
+Title: Just another No-U-Turn sampler
+Version: 1.0
+Date: 2020-05-06
+Author: M. Peruzzi
+Maintainer: M. Peruzzi <mklnsrc@gmail.com>
+Description: Samples from multivariate Gaussian using NUTS (Hoffman & Gelman, 2014)
+License: GPL (>= 2)
+Imports: Rcpp (>= 1.0.4.6)
+LinkingTo: Rcpp, RcppArmadillo
