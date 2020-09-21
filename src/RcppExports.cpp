@@ -7,8 +7,8 @@
 using namespace Rcpp;
 
 // mvn_nuts_sampler
-arma::mat mvn_nuts_sampler(const arma::vec& mean, const arma::mat& Sigma, int mcmc, double epsin, bool adapting);
-RcppExport SEXP _januts_mvn_nuts_sampler(SEXP meanSEXP, SEXP SigmaSEXP, SEXP mcmcSEXP, SEXP epsinSEXP, SEXP adaptingSEXP) {
+arma::mat mvn_nuts_sampler(const arma::vec& mean, const arma::mat& Sigma, int mcmc, double epsin, bool adapting, int max_depth);
+RcppExport SEXP _januts_mvn_nuts_sampler(SEXP meanSEXP, SEXP SigmaSEXP, SEXP mcmcSEXP, SEXP epsinSEXP, SEXP adaptingSEXP, SEXP max_depthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -17,13 +17,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type mcmc(mcmcSEXP);
     Rcpp::traits::input_parameter< double >::type epsin(epsinSEXP);
     Rcpp::traits::input_parameter< bool >::type adapting(adaptingSEXP);
-    rcpp_result_gen = Rcpp::wrap(mvn_nuts_sampler(mean, Sigma, mcmc, epsin, adapting));
+    Rcpp::traits::input_parameter< int >::type max_depth(max_depthSEXP);
+    rcpp_result_gen = Rcpp::wrap(mvn_nuts_sampler(mean, Sigma, mcmc, epsin, adapting, max_depth));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_januts_mvn_nuts_sampler", (DL_FUNC) &_januts_mvn_nuts_sampler, 5},
+    {"_januts_mvn_nuts_sampler", (DL_FUNC) &_januts_mvn_nuts_sampler, 6},
     {NULL, NULL, 0}
 };
 
