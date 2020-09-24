@@ -6,9 +6,9 @@
 
 using namespace Rcpp;
 
-// mvn_nuts_sampler
-arma::mat mvn_nuts_sampler(const arma::vec& mean, const arma::mat& Sigma, int mcmc, double epsin, bool adapting, int max_depth);
-RcppExport SEXP _januts_mvn_nuts_sampler(SEXP meanSEXP, SEXP SigmaSEXP, SEXP mcmcSEXP, SEXP epsinSEXP, SEXP adaptingSEXP, SEXP max_depthSEXP) {
+// rmvn_nuts
+arma::mat rmvn_nuts(const arma::vec& mean, const arma::mat& Sigma, int mcmc, double epsin, bool adapting, int max_depth);
+RcppExport SEXP _januts_rmvn_nuts(SEXP meanSEXP, SEXP SigmaSEXP, SEXP mcmcSEXP, SEXP epsinSEXP, SEXP adaptingSEXP, SEXP max_depthSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -18,13 +18,29 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type epsin(epsinSEXP);
     Rcpp::traits::input_parameter< bool >::type adapting(adaptingSEXP);
     Rcpp::traits::input_parameter< int >::type max_depth(max_depthSEXP);
-    rcpp_result_gen = Rcpp::wrap(mvn_nuts_sampler(mean, Sigma, mcmc, epsin, adapting, max_depth));
+    rcpp_result_gen = Rcpp::wrap(rmvn_nuts(mean, Sigma, mcmc, epsin, adapting, max_depth));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rmvn_hmc
+arma::mat rmvn_hmc(const arma::vec& mean, const arma::mat& Sigma, int mcmc, double epsin, bool adapting);
+RcppExport SEXP _januts_rmvn_hmc(SEXP meanSEXP, SEXP SigmaSEXP, SEXP mcmcSEXP, SEXP epsinSEXP, SEXP adaptingSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Sigma(SigmaSEXP);
+    Rcpp::traits::input_parameter< int >::type mcmc(mcmcSEXP);
+    Rcpp::traits::input_parameter< double >::type epsin(epsinSEXP);
+    Rcpp::traits::input_parameter< bool >::type adapting(adaptingSEXP);
+    rcpp_result_gen = Rcpp::wrap(rmvn_hmc(mean, Sigma, mcmc, epsin, adapting));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_januts_mvn_nuts_sampler", (DL_FUNC) &_januts_mvn_nuts_sampler, 6},
+    {"_januts_rmvn_nuts", (DL_FUNC) &_januts_rmvn_nuts, 6},
+    {"_januts_rmvn_hmc", (DL_FUNC) &_januts_rmvn_hmc, 5},
     {NULL, NULL, 0}
 };
 

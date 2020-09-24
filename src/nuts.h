@@ -1,116 +1,22 @@
-#include "RcppArmadillo.h"
+#include "utils.h"
 
-#include "nuts_distparams.h"
-#include "nuts_adapt.h"
-#include "targets.h"
+#ifndef NUTSH
+#define NUTSH
 
+using namespace std;
 
-// Position q and momentum p
-struct pq_point {
-  arma::vec q;
-  arma::vec p;
-  
-  explicit pq_point(int n): q(n), p(n) {}
-  pq_point(const pq_point& z): q(z.q.size()), p(z.p.size()) {
-    q = z.q;
-    p = z.p;
-  }
-  
-  pq_point& operator= (const pq_point& z) {
-    if (this == &z)
-      return *this;
-    
-    q = z.q;
-    p = z.p;
-    
-    return *this;
-  }
-};
-
-struct nuts_util {
-  // Constants through each recursion
-  double log_u; // uniform sample
-  double H0; 	// Hamiltonian of starting point?
-  int sign; 	// direction of the tree in a given iteration/recursion
-  
-  // Aggregators through each recursion
-  int n_tree;
-  double sum_prob; 
-  bool criterion;
-  
-  // just to guarantee bool initializes to valid value
-  nuts_util() : criterion(false) { }
-};
-
-
-inline bool compute_criterion(arma::vec& p_sharp_minus, 
-                              arma::vec& p_sharp_plus,
-                              arma::vec& rho) {
-  double crit1 = arma::conv_to<double>::from(p_sharp_plus.t() * rho);
-  double crit2 = arma::conv_to<double>::from(p_sharp_minus.t() * rho);
-  return crit1 > 0 && crit2 > 0;
-}
-
-
-template <class T>
-inline void leapfrog(pq_point &z, float epsilon, T& postparams){
-  z.p += epsilon * 0.5 * grad_loglike_cpp(z.q, postparams);
-  z.q += epsilon * postparams.M * z.p;
-  z.p += epsilon * 0.5 * grad_loglike_cpp(z.q, postparams);
-}
-
-template <class T>
-inline double find_reasonable_stepsize(const arma::vec& current_q, T& postparams){
-  int K = current_q.n_elem;
-  pq_point z(K);
-  arma::vec p0 = postparams.Michol * arma::randn(K);
-  
-  double epsilon = 1;
-  z.q = current_q;
-  z.p = p0;
-  
-  double p_orig = loglike_cpp(z.q, postparams) - 0.5* arma::conv_to<double>::from(z.p.t() * postparams.M * z.p);//sum(z.p % z.p); 
-
-  leapfrog(z, epsilon, postparams);
-  double p_prop = loglike_cpp(z.q, postparams) - 0.5* arma::conv_to<double>::from(z.p.t() * postparams.M * z.p);//sum(z.p % z.p); 
-
-  double p_ratio = exp(p_prop - p_orig);
-  double a = 2 * (p_ratio > .5) - 1;
-  int it=0;
-  bool condition = (pow(p_ratio, a) > pow(2.0, -a)) || std::isnan(p_ratio);
-  
-  while( condition & (it < 50) ){
-    it ++;
-    epsilon = pow(2.0, a) * epsilon;
-    
-    leapfrog(z, epsilon, postparams);
-    p_prop = loglike_cpp(z.q, postparams) - 0.5* arma::conv_to<double>::from(z.p.t() * postparams.M * z.p);//sum(z.p % z.p); 
-    p_ratio = exp(p_prop - p_orig);
-    
-    condition = (pow(p_ratio, a) > pow(2.0, -a)) || std::isnan(p_ratio);
-    //Rcpp::Rcout << "epsilon : " << epsilon << " p_ratio " << p_ratio << " " << p_prop << "," << p_orig << " .. " << pow(p_ratio, a) << "\n";
-    // reset
-    z.q = current_q;
-    z.p = p0;
-  }
-  if(it == 50){
-    epsilon = .01;
-    Rcpp::Rcout << "Set epsilon to " << epsilon << " after no reasonable stepsize could be found. (?)\n";
-  }
-  return epsilon/2.0;
-} 
 
 template <class T>
 inline int BuildTree(pq_point& z, pq_point& z_propose, 
-              arma::vec& p_sharp_left, 
-              arma::vec& p_sharp_right, 
-              arma::vec& rho, 
-              nuts_util& util, 
-              int depth, float epsilon,
-              T& postparams,
-              double& alpha,
-              double& n_alpha,
-              double joint_zero){
+                     arma::vec& p_sharp_left, 
+                     arma::vec& p_sharp_right, 
+                     arma::vec& rho, 
+                     nuts_util& util, 
+                     int depth, float epsilon,
+                     T& postparams,
+                     double& alpha,
+                     double& n_alpha,
+                     double joint_zero){
   
   //Rcpp::Rcout << "\n Tree direction:" << util.sign << " Depth:" << depth << std::endl;
   
@@ -125,7 +31,7 @@ inline int BuildTree(pq_point& z, pq_point& z_propose,
   if(depth == 0){
     leapfrog(z, util.sign * epsilon, postparams);
     
-    float joint = loglike_cpp(z.q, postparams) - 0.5 * arma::conv_to<double>::from(z.p.t() * postparams.M * z.p);//sum(z.p % z.p); 
+    float joint = loglike_cpp(z.q, postparams) - 0.5 * arma::conv_to<double>::from(z.p.t() * z.p);//sum(z.p % z.p); 
     
     int valid_subtree = (util.log_u <= joint);    // Is the new point in the slice?
     util.criterion = util.log_u - joint < delta_max; // Is the simulation wildly inaccurate? // TODO: review
@@ -189,8 +95,8 @@ inline int BuildTree(pq_point& z, pq_point& z_propose,
 
 template <class T>
 inline arma::vec sample_one_nuts_cpp(arma::vec current_q, 
-                              T& postparams,
-                              AdaptE& adaptparams){
+                                     T& postparams,
+                                     AdaptE& adaptparams){
   
   
   
@@ -200,7 +106,7 @@ inline arma::vec sample_one_nuts_cpp(arma::vec current_q,
   //int iter = 3;
   
   //arma::mat h_n_samples(K, iter);   // traces of p
-  arma::vec p0 = postparams.Michol * arma::randn(K);                  // initial momentum
+  arma::vec p0 = arma::randn(K);                  // initial momentum
   //current_q = log(current_q); 		// Transform to unrestricted space
   //h_n_samples.col(1) = current_q;
   
@@ -228,7 +134,7 @@ inline arma::vec sample_one_nuts_cpp(arma::vec current_q,
   //Rcpp::Rcout << "sample_one_nuts_cpp: \n";
   double current_logpost = loglike_cpp(current_q, postparams);
   ///Rcpp::Rcout << "starting from: " << current_logpost << "\n";
-  double joint = current_logpost - 0.5* arma::conv_to<double>::from(z.p.t() * postparams.M * z.p);//sum(z.p % z.p); 
+  double joint = current_logpost - 0.5* arma::conv_to<double>::from(z.p.t() * z.p);//sum(z.p % z.p); 
   
   // Slice variable
   ///////////////////////
@@ -303,3 +209,5 @@ inline arma::vec sample_one_nuts_cpp(arma::vec current_q,
   
   return current_q;
 }
+
+#endif
