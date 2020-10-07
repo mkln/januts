@@ -27,3 +27,4 @@ hist(mvn_sampled[2,], breaks=200, main="MVN, 2")
 
 
 *This package is an extension of source code at https://github.com/alumbreras/NUTS-Cpp*
+*Source in the `other` folder is the `R` version of https://github.com/kasparmartens/NUTS*

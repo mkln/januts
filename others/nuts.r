@@ -1,4 +1,4 @@
-#' No-U-Turn sampler
+#' No-U-Turn sampler (https://github.com/kasparmartens/NUTS)
 #'
 #' @param theta Initial value for the parameters
 #' @param n_iter Number of MCMC iterations

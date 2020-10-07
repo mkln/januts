@@ -1,3 +1,5 @@
+# https://github.com/kasparmartens/NUTS
+
 rleapfrog_step = function(theta, r, eps, grad_f, M_diag){
   r_tilde <- r + 0.5 * eps * grad_f(theta)
   theta_tilde <- theta + eps * r_tilde / M_diag
